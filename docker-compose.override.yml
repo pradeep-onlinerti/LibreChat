@@ -1,0 +1,109 @@
+# docker-compose.override.yaml
+version: '3.8'
+
+services:
+  api:
+    image: ghcr.io/danny-avila/librechat:v0.7.8
+    environment:
+      - AGENTS=false
+      - CONFIG_VERSION=1.2.8
+      - RAG_PORT=${RAG_PORT:-8000}
+      - RAG_API_URL=http://rag_api:${RAG_PORT:-8000}
+      - HOST=0.0.0.0
+      - APP_TAGLINE=Powering RTI Mitra’s Chat Interface
+      - MONGO_URI=mongodb://mongodb:27017/LibreChat # Assuming 'mongodb' is the service name for your MongoDB
+      - MEILI_HOST=http://meilisearch:7700
+      - ENABLE_METRICS=true # Good to have this here, although the exporter is separate.
+      # You may need to add CREDS_KEY and CREDS_IV if not already in your .env
+      # - CREDS_KEY=${CREDS_KEY}
+      # - CREDS_IV=${CREDS_IV}
+    volumes:
+      - ./librechat.yaml:/app/librechat.yaml
+    networks:
+      - my-llm-network # Ensure API is on this network
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.12.3 
+    environment:
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+    networks:
+      - my-llm-network # Ensure Meilisearch is on this network
+
+  # --- NEW SERVICE: LibreChat Metrics Exporter ---
+  metrics:
+    image: ghcr.io/virtuos/librechat_exporter:main
+    container_name: librechat-metrics-exporter # Friendly name for the container
+    depends_on:
+      - mongodb # Assumes 'mongodb' is your MongoDB service name in the main compose file
+    ports:
+      - "8000:8000" # Host port:Container port. This is where you'll curl for metrics.
+    environment:
+      # IMPORTANT: This MONGODB_URI must correctly reference your MongoDB service.
+      # If your MongoDB service in the main docker-compose.yaml is named 'mongodb', this is correct.
+      - MONGODB_URI=mongodb://mongodb:27017/LibreChat # Use the service name within the Docker network
+      - LOGGING_LEVEL=info
+    networks:
+      - my-llm-network # Ensure exporter is on this network
+    restart: unless-stopped
+
+  # --- NEW SERVICE: Prometheus ---
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    depends_on:
+      - metrics # Prometheus needs the exporter to be running
+    ports:
+      - "9090:9090" # Prometheus UI port
+    volumes:
+      - ./prometheus:/etc/prometheus # Mount your Prometheus config file
+      - prometheus_data:/prometheus # Volume for Prometheus data persistence
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    networks:
+      - my-llm-network # Ensure Prometheus is on this network
+    restart: unless-stopped
+
+  # --- NEW SERVICE: Grafana ---
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus # Grafana needs Prometheus as a data source
+    ports:
+      - "3005:3000" # Grafana UI port (default)
+    volumes:
+      - grafana_data:/var/lib/grafana # Volume for Grafana data persistence
+      # You can optionally use provisioning for data sources and dashboards:
+      # - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      # Optional: Set admin user and password via environment variables
+      # - GF_SECURITY_ADMIN_USER=admin
+      # - GF_SECURITY_ADMIN_PASSWORD=your_secure_password
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning # Path for provisioning config
+    networks:
+      - my-llm-network # Ensure Grafana is on this network
+    restart: unless-stopped
+
+  mongodb:
+      networks:
+        - my-llm-network
+
+  rag_api:
+      networks:
+        - my-llm-network
+
+  vectordb:
+      networks:
+        - my-llm-network
+
+# Define your volumes at the root level of the compose file
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  my-llm-network:
