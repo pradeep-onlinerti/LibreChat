@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s # How often Prometheus scrapes targets
+
+scrape_configs:
+  - job_name: 'librechat'
+    # Target the metrics exporter by its service name within the Docker network
+    static_configs:
+      - targets: ['librechat-metrics-exporter:8000']
