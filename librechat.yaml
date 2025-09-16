@@ -1,0 +1,76 @@
+# librechat.yaml
+version: 1.2.8 # <--- UPDATED to match the latest config schema
+
+cache: true
+
+
+# Custom Interface Configuration
+interface:
+  customWelcome: "Welcome to RTI Mitra! Enjoy your experience."
+  privacyPolicy:
+    externalUrl: 'https://chat.onlinerti.com/privacy.html'
+    openNewTab: true
+  termsOfService:
+    externalUrl: 'https://chat.onlinerti.com/termsofservice.html'
+    openNewTab: false
+    modalAcceptance: true
+    modalTitle: "Terms of Service for RTI Mitra"
+    modalContent: |
+      # Terms and Conditions for RTI Mitra
+
+      **Disclaimer & Personal Data Notice**
+
+      **1.	Use at Your Own Discretion**
+      This chatbot is designed to assist users in drafting RTI (Right to Information) applications. The drafts are generated using AI based on the information you provide. Please review and edit the drafts as needed before using them officially.
+
+      **2.	No Legal Liability**
+      We do not provide legal advice. The chatbot is an informational tool meant to assist in drafting RTI applications. We make no guarantees regarding the accuracy, completeness, or usefulness of the generated drafts for your specific situation.
+
+      **3.	Handling of Personal Data**
+      •	Do not share sensitive personal information. You are not required to provide your name, address, PAN, phone number, or any other personally identifiable information (PII) to use this chatbot.
+      •	If personal details are required for generating a realistic RTI draft, you may enter dummy data (e.g., “ABC”, “123456”, etc.). You can replace this with actual information before submitting your RTI.
+      •	We do not store or process any personal data for purposes other than generating the draft during the session.
+      •	We are not responsible for any personal data you choose to share while using this tool.
+
+      **4.	Information Use & Storage**
+      •	The drafts and inputs may be temporarily processed to improve the chatbot experience. However, we strive to anonymize or mask any sensitive details where possible.
+      •	If you wish to retain a draft, please copy it or download it. We do not guarantee storage or future access to previous drafts.
+
+      **5.	Responsibility for Use**
+      By using this chatbot, you agree that you are solely responsible for how you use the information provided. Always verify RTI drafts before submission.
+      
+  # Disable Agents and other unnecessary features
+  endpointsMenu: false
+  modelSelect: true # Still recommended to be true for visual confirmation
+  parameters: false
+  sidePanel: false
+  presets: false
+  #prompts: false # Leave commented if you want prompts to potentially be available
+  bookmarks: false
+  multiConvo: false
+  runCode: false # <--- ADD THIS LINE TO DISABLE THE "RUN CODE" BUTTON
+  agents: false # No longer needed here if AGENTS=false in .env/docker-compose.override.yaml
+
+registration:
+  socialLogins: ['google']
+
+endpoints:
+  custom:
+    - name: "RTIMitra"
+      apiKey: "${ANYTHINGLLM_API_KEY}" # <--- UPDATED to use environment variable (RECOMMENDED)
+      baseURL: "http://anythingllm:3001/api/v1/openai"
+      models:
+        default: ["rti-mitra"]
+        fetch: false
+      list:
+        - id: rti-mitra
+          name: "RTI Mitra"
+          showIconInMenu: true
+          showIconInHeader: true
+          icon: logo
+      titleConvo: true
+      titleModel: "rti-mitra"
+      summarize: false
+      summaryModel: "rti-mitra"
+      forcePrompt: false
+      modelDisplayLabel: "RTI Mitra"
