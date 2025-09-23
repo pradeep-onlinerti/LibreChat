@@ -82,6 +82,11 @@
     "url": "https://github.com/danny-avila/LibreChat/issues"
   },
   "homepage": "https://librechat.ai/",
+  "dependencies": {
+    "express-validator": "^7.2.1",
+    "googleapis": "^126.0.1",
+    "lodash": "^4.17.21"
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.1",
     "@eslint/compat": "^1.2.6",
@@ -89,6 +94,8 @@
     "@eslint/js": "^9.20.0",
     "@microsoft/eslint-formatter-sarif": "^3.1.0",
     "@playwright/test": "^1.50.1",
+    "@types/express-validator": "^3.0.0",
+    "@types/lodash": "^4.14.200",
     "@types/react-virtualized": "^9.22.0",
     "cross-env": "^7.0.3",
     "elliptic": "^6.6.1",

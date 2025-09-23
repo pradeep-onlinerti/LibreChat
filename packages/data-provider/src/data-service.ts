@@ -782,3 +782,22 @@ export function verifyTwoFactorTemp(
 ): Promise<t.TVerify2FATempResponse> {
   return request.post(endpoints.verifyTwoFactorTemp(), payload);
 }
+
+// Add this method to the existing dataService object
+submitFeedback: async (feedbackData: t.TFeedbackData) => {
+  const token = localStorage.getItem("token"); // grab stored JWT
+  const response = await fetch('/api/feedback', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+       Authorization: `Bearer ${token}` ,
+    },
+    body: JSON.stringify(feedbackData),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to submit feedback');
+  }
+
+  return response.json();
+}

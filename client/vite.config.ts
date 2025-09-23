@@ -154,6 +154,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '~/types/feedback': path.resolve(__dirname, 'src/types/feedback'),
+      '~/constants/feedback': path.resolve(__dirname, 'src/constants/feedback'),
+      '~/hooks/useFeedback': path.resolve(__dirname, 'src/hooks/useFeedback'),
+      '~/utils/feedback': path.resolve(__dirname, 'src/utils/feedback'),
       '~': path.join(__dirname, 'src/'),
       $fonts: resolve('public/fonts'),
     },

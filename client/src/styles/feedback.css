@@ -1,0 +1,42 @@
+/ client/src/styles/feedback.css
+:root {
+  --feedback-border-color: #e5e7eb;
+  --feedback-hover-bg: #f3f4f6;
+  --feedback-positive-color: #10b981;
+  --feedback-positive-bg: #ecfdf5;
+  --feedback-negative-color: #ef4444;
+  --feedback-negative-bg: #fef2f2;
+  --feedback-tooltip-bg: #374151;
+  --feedback-tooltip-text: #ffffff;
+  --feedback-focus-color: #3b82f6;
+}
+
+[data-theme='dark'] {
+  --feedback-border-color: #4b5563;
+  --feedback-hover-bg: #374151;
+  --feedback-positive-bg: #064e3b;
+  --feedback-negative-bg: #7f1d1d;
+  --feedback-tooltip-bg: #1f2937;
+}
+
+.feedback-container {
+  border-top: 1px solid var(--feedback-border-color);
+}
+
+.feedback-button {
+  transition: all 0.2s ease;
+}
+
+.feedback-button:hover {
+  background-color: var(--feedback-hover-bg);
+}
+
+.feedback-button--positive.feedback-button--selected {
+  color: var(--feedback-positive-color);
+  background-color: var(--feedback-positive-bg);
+}
+
+.feedback-button--negative.feedback-button--selected {
+  color: var(--feedback-negative-color);
+  background-color: var(--feedback-negative-bg);
+}
