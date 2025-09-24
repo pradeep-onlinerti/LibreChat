@@ -45,7 +45,7 @@ const FeedbackButtons = ({ messageId, conversationId, messageContent }) => {
   };
 
   return (
-    <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+    <div className="flex items-center gap-2 transition-opacity">
       <button
         onClick={() => handleFeedbackClick('positive')}
         disabled={isSubmitted}
