@@ -112,3 +112,5 @@ volumes:
 
 networks:
   my-llm-network:
+    name: librechat-my-llm-network  # <- absolute name
+    driver: bridge
