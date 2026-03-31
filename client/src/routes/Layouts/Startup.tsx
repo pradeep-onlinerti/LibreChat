@@ -25,6 +25,25 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
   const [headerText, setHeaderText] = useState<TranslationKeys | null>(null);
   const [startupConfig, setStartupConfig] = useState<TStartupConfig | null>(null);
 
+  // ── Responsive image: track viewport width via matchMedia ──
+  // Using matchMedia instead of CSS <picture> or injected CSS because:
+  // - CSS background-image in injected <style> tags isn't re-evaluated on resize in DevTools
+  // - <picture><source media="..."> only evaluates at page load, not on resize
+  // - matchMedia fires a live 'change' event whenever the breakpoint is crossed,
+  //   causing React to re-render with the correct inline backgroundImage src,
+  //   which triggers a real network request for the new image.
+  const [isMobile, setIsMobile] = useState<boolean>(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches,
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    setIsMobile(mql.matches); // sync immediately on mount
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
   const {
     data,
     isFetching,
@@ -48,7 +67,8 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
 
   // Set page title to RTI Mitra branding
   useEffect(() => {
-    document.title = startupConfig?.appTitle || 'RTI Mitra – Draft RTI Applications Instantly Using AI';
+    document.title =
+      startupConfig?.appTitle || 'RTI Mitra – Draft RTI Applications Instantly Using AI';
   }, [startupConfig?.appTitle]);
 
   // Inject RTI Mitra CSS variables and base styles into the document root
@@ -152,7 +172,25 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
           margin: 0 auto;
           padding: 3rem 1.5rem 2rem;
         }
-        .rti-hero__content { flex: 1; }
+        .rti-hero__content {
+          width: 100%;
+        }
+
+        /* ── Hero image (dimensions only — src set via React inline style) ── */
+        .rti-hero__img {
+          width: 100%;
+          aspect-ratio: 16 / 7;
+          background-size: cover;
+          background-position: center;
+          border-radius: 12px;
+          display: block;
+        }
+        @media (max-width: 768px) {
+          .rti-hero__img {
+            aspect-ratio: 4 / 3;
+          }
+        }
+
         .rti-hero__title {
           font-size: 2.2rem;
           font-weight: 800;
@@ -201,21 +239,6 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
           border-color: var(--rti-primary);
           box-shadow: 0 2px 8px rgba(26,127,122,0.15);
         }
-        .rti-hero__image {
-          flex: 1;
-          display: flex;
-          justify-content: center;
-        }
-        .rti-hero__image-placeholder {
-          width: 260px;
-          height: 180px;
-          background: linear-gradient(135deg, #e6f5f4 0%, #c8eae8 100%);
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 3rem;
-        }
         .rti-trust-badge {
           text-align: center;
           font-size: 0.8rem;
@@ -227,11 +250,24 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
           gap: 0.5rem;
         }
 
-        /* ── Two-column body ── */
+        @media (max-width: 768px) {
+          .rti-hero__content {
+            min-height: unset;
+          }
+        }
+
+        /* ── Login section (full-width, directly below hero) ── */
+        .rti-login-section {
+          max-width: 900px;
+          margin: 0 auto;
+          padding: 0 1.5rem 1.5rem;
+        }
+
+        /* ── Two-column body (features + notes, below login) ── */
         .rti-body {
           max-width: 900px;
           margin: 0 auto;
-          padding: 1.5rem;
+          padding: 0 1.5rem 1.5rem;
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 1.5rem;
@@ -320,8 +356,6 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
           border: 1px solid var(--rti-warning-border);
           border-radius: 12px;
           padding: 1.25rem 1.5rem;
-          margin-top: 1.5rem;
-          grid-column: 1;
         }
         .rti-note-card__title {
           font-size: 1rem;
@@ -346,8 +380,6 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
           border: 1px solid var(--rti-border);
           border-radius: 12px;
           padding: 1.25rem 1.5rem;
-          margin-top: 1rem;
-          grid-column: 1;
         }
         .rti-coming-soon__title {
           font-size: 1rem;
@@ -448,23 +480,29 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
     isFetching,
   };
 
+  // Derived from isMobile state — changes trigger a re-render and a new network request
+  const heroImageSrc = isMobile
+    ? '/assets/rti-mitra-illu-mobile.png'
+    : '/assets/rti-mitra-illu-mr.png';
+
   return (
     <div className="rti-page-root">
-     
 
       {/* ── Hero ── */}
       <div className="rti-hero">
-        <div
-          className="rti-hero__content"
-          style={{
-            backgroundImage: "url('/assets/rti-mitra-illu-mr.png')",
-            backgroundSize: "cover",      // or "contain" depending on your need
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "center",
-            width: "100%",
-            minHeight: "400px"            // adjust height as needed
-          }}
-        >
+        <div className="rti-hero__content">
+          {/*
+            backgroundImage is set via React inline style so the browser
+            makes a real network request whenever isMobile flips.
+            This is guaranteed to work in DevTools device simulation
+            and on real mobile devices — unlike <picture> or injected CSS.
+          */}
+          <div
+            className="rti-hero__img"
+            role="img"
+            aria-label="RTI Mitra – Your AI friend for all your RTI needs"
+            style={{ backgroundImage: `url('${heroImageSrc}')` }}
+          />
         </div>
       </div>
 
@@ -472,9 +510,26 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
         🏢 Built by the team behind OnlineRTI.com &nbsp;|&nbsp; ⚡ 10+ years of RTI experience
       </p>
 
-      {/* ── Two-column body ── */}
+      {/* ── Login card — directly below hero ── */}
+      <div className="rti-login-section">
+        <div className="rti-login-card">
+          <h2 className="rti-login-card__title">Login to Draft RTIs</h2>
+          <AuthLayout
+            header={headerText ? localize(headerText) : localize(headerMap[location.pathname])}
+            isFetching={isFetching}
+            startupConfig={startupConfig}
+            startupConfigError={startupConfigError}
+            pathname={location.pathname}
+            error={error}
+          >
+            <Outlet context={contextValue} />
+          </AuthLayout>
+        </div>
+      </div>
+
+      {/* ── Two-column body (features, notes) — below login ── */}
       <div className="rti-body">
-        {/* Left column */}
+        {/* Left column — features + how it works */}
         <div>
           <div className="rti-features-card">
             <h2 className="rti-features-card__title">Why Try RTI Mitra<sup>Beta</sup>?</h2>
@@ -503,7 +558,7 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
             </div>
           </div>
 
-          <div className="rti-how-works" id="how-it-works">
+          <div className="rti-how-works" id="how-it-works" style={{ marginTop: '1rem' }}>
             <p className="rti-how-works__title">How RTI Mitra Works</p>
             <div className="rti-step">
               <span className="rti-step__num">1</span>
@@ -520,42 +575,26 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
           </div>
         </div>
 
-        {/* Right column — Login card wrapping the Outlet */}
-        <div>
-          <div className="rti-login-card">
-            <h2 className="rti-login-card__title">Login to Draft RTIs</h2>
-            <AuthLayout
-              header={headerText ? localize(headerText) : localize(headerMap[location.pathname])}
-              isFetching={isFetching}
-              startupConfig={startupConfig}
-              startupConfigError={startupConfigError}
-              pathname={location.pathname}
-              error={error}
-            >
-              <Outlet context={contextValue} />
-            </AuthLayout>
+        {/* Right column — important note + coming soon */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="rti-note-card">
+            <p className="rti-note-card__title">⚠️ Important Note</p>
+            <ul>
+              <li>RTI Mitra currently only <strong>drafts RTI applications</strong>.</li>
+              <li>Filing must be done by <strong>you</strong> on official government portals or offline.</li>
+              <li>Most portals require only a simple <strong>OTP</strong> to submit.</li>
+              <li>Our guides and support team will help if you face difficulty.</li>
+            </ul>
           </div>
-        </div>
 
-        {/* Important note — spans left column */}
-        <div className="rti-note-card">
-          <p className="rti-note-card__title">⚠️ Important Note</p>
-          <ul>
-            <li>RTI Mitra currently only <strong>drafts RTI applications</strong>.</li>
-            <li>Filing must be done by <strong>you</strong> on official government portals or offline.</li>
-            <li>Most portals require only a simple <strong>OTP</strong> to submit.</li>
-            <li>Our guides and support team will help if you face difficulty.</li>
-          </ul>
-        </div>
-
-        {/* Coming soon */}
-        <div className="rti-coming-soon">
-          <p className="rti-coming-soon__title">🔜 Coming Soon</p>
-          <ul>
-            <li>Search government information automatically</li>
-            <li>Find answers from previous RTIs</li>
-            <li>Guided filing support</li>
-          </ul>
+          <div className="rti-coming-soon">
+            <p className="rti-coming-soon__title">🔜 Coming Soon</p>
+            <ul>
+              <li>Search government information automatically</li>
+              <li>Find answers from previous RTIs</li>
+              <li>Guided filing support</li>
+            </ul>
+          </div>
         </div>
       </div>
 
